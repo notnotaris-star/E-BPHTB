@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>e-BPHTB Dashboard & Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --card-bg: rgba(18, 24, 38, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --primary: #00ffaa;
+      --primary-glow: rgba(0, 255, 170, 0.2);
+      --accent-cyan: #00e5ff;
+      --accent-purple: #a855f7;
+      --accent-danger: #ef4444;
+      --accent-amber: #f59e0b;
+      --border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 2rem;
+      overflow-x: hidden;
+    }
+
+    header {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.9rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #00ffaa 0%, #00b4d8 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-weight: 800;
+      font-size: 1.2rem;
+      box-shadow: 0 0 15px var(--primary-glow);
+      flex-shrink: 0;
+    }
+
+    .brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-text p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 1650px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      padding: 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--primary);
+    }
+
+    .stat-card.cyan::before { background: var(--accent-cyan); }
+    .stat-card.danger::before { background: var(--accent-danger); }
+    .stat-card.warn::before { background: var(--accent-amber); }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .status-summary-bar {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.5rem;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .status-chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      padding: 0.45rem 0.85rem;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .status-chip:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .status-chip b {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 0.15rem 0.45rem;
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+    }
+
+    .chip-blue { border-color: rgba(59, 130, 246, 0.4); color: #93c5fd; }
+    .chip-cyan { border-color: rgba(6, 182, 212, 0.4); color: #67e8f9; }
+    .chip-purple { border-color: rgba(168, 85, 247, 0.4); color: #d8b4fe; }
+    .chip-amber { border-color: rgba(245, 158, 11, 0.4); color: #fde68a; }
+    .chip-success { border-color: rgba(16, 185, 129, 0.4); color: #6ee7b7; }
+    .chip-danger { border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
+
+    .table-controls {
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .filter-group-top {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .filter-group-bottom {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 2;
+      min-width: 250px;
+    }
+
+    .select-jenis, .select-status {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .date-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .input-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.6rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-box:focus {
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 0.6rem 1.15rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #000;
+      box-shadow: 0 0 12px var(--primary-glow);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-danger-soft {
+      border-color: rgba(239, 68, 68, 0.5) !important;
+      color: #fca5a5 !important;
+    }
+
+    .btn-pill {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.55rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .action-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .action-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      overflow: hidden;
+      width: 100%;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    th {
+      background: rgba(15, 23, 42, 0.95);
+      padding: 0.9rem 1rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      white-space: nowrap;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .badge {
+      padding: 0.25rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .badge-gray { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
+    .badge-blue { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+    .badge-cyan { background: rgba(6, 182, 212, 0.15); color: #67e8f9; }
+    .badge-purple { background: rgba(168, 85, 247, 0.15); color: #d8b4fe; }
+    .badge-amber { background: rgba(245, 158, 11, 0.15); color: #fde68a; }
+    .badge-success { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
+    .badge-danger { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+
+    .pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .page-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .mobile-card-container { display: none; }
+    .mobile-pagination { display: none; }
+    .mobile-bottom-nav { display: none; }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-card {
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title { font-weight: 700; font-size: 1rem; }
+    .modal-close { background: transparent; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; }
+    .modal-body { padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.85rem; }
+
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+    .form-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+
+    .calc-preview {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+    }
+
+    .calc-row { display: flex; justify-content: space-between; align-items: center; }
+    .calc-row.total { border-top: 1px solid var(--border-color); padding-top: 0.4rem; font-weight: 700; color: #fff; }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #0f172a;
+      border: 1px solid var(--primary);
+      color: #fff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 200;
+    }
+
+    .toast.show { display: block; }
+
+    @media (max-width: 850px) {
+      body { padding-bottom: 5.5rem; }
+      header { padding: 0.75rem 1rem; }
+      .header-actions { display: none; }
+      .container { padding: 0.75rem; }
+
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1rem; }
+      .stat-card { padding: 0.85rem; }
+      .stat-value { font-size: 1.15rem; }
+
+      .filter-group-top { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+      .filter-group-bottom { flex-wrap: wrap; }
+      .date-input-wrap { width: 100%; }
+      .date-input-wrap input[type="date"] { flex: 1; }
+
+      #desktop-table-container { display: none; }
+      
+      .mobile-card-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+      }
+
+      .mobile-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .bphtb-card-mobile {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        backdrop-filter: blur(10px);
+        border-radius: 14px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+
+      .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        padding-bottom: 0.5rem;
+      }
+
+      .card-noreg { font-size: 0.85rem; font-weight: 700; color: var(--primary); }
+      .card-date { font-size: 0.75rem; color: var(--text-muted); }
+      .card-wp { font-size: 0.95rem; font-weight: 700; color: #fff; }
+      .card-nop { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+      .card-finance-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        background: rgba(0, 0, 0, 0.35);
+        padding: 0.65rem 0.85rem;
+        border-radius: 8px;
+      }
+
+      .card-fin-item span { font-size: 0.68rem; color: var(--text-muted); display: block; }
+      .card-fin-item b { font-size: 0.82rem; font-family: 'JetBrains Mono', monospace; }
+
+      .card-footer-action {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.2rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(14px);
+        border-top: 1px solid var(--border-color);
+        padding: 0.65rem 1.25rem;
+        z-index: 90;
+        justify-content: space-around;
+        align-items: center;
+      }
+
+      .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        font-size: 0.7rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .nav-item.active { color: var(--primary); }
+      .form-grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">B</div>
+      <div class="brand-text">
+        <h1>e-BPHTB Dashboard</h1>
+        <p>Database & Validasi Pajak Terintegrasi</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline" onclick="loadDashboard()">🔄 Refresh</button>
+      <button class="btn btn-outline" id="btn-admin-auth" onclick="toggleAdminMode()">🔐 Masuk Admin</button>
+      <button class="btn btn-primary" id="btn-add-record" onclick="openCreateModal()" style="display: none;">+ Tambah Berkas</button>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Quick Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Permohonan</div>
+        <div class="stat-value" id="stat-total">0</div>
+      </div>
+      <div class="stat-card cyan">
+        <div class="stat-label">Berkas Selesai / Lunas</div>
+        <div class="stat-value" id="stat-selesai">0</div>
+      </div>
+      <div class="stat-card danger">
+        <div class="stat-label">Ditolak / Gagalkan</div>
+        <div class="stat-value" id="stat-ditolak">0</div>
+      </div>
+      <div class="stat-card warn">
+        <div class="stat-label">Total Akumulasi BPHTB</div>
+        <div class="stat-value" id="stat-bphtb">Rp0</div>
+      </div>
+    </div>
+
+    <!-- 10 Status Summary Chips -->
+    <div class="status-summary-bar">
+      <div class="status-chip" onclick="quickFilterStatus('all')"><span>Semua</span><b id="sc-all">0</b></div>
+      <div class="status-chip chip-gray" onclick="quickFilterStatus('pengajuan')"><span>Pengajuan</span><b id="sc-pengajuan">0</b></div>
+      <div class="status-chip chip-blue" onclick="quickFilterStatus('pengecekan berkas')"><span>Pengecekan Berkas</span><b id="sc-pengecekan">0</b></div>
+      <div class="status-chip chip-blue" onclick="quickFilterStatus('persetujuan berkas')"><span>Persetujuan Berkas</span><b id="sc-persetujuan-berkas">0</b></div>
+      <div class="status-chip chip-cyan" onclick="quickFilterStatus('verifikasi')"><span>Verifikasi</span><b id="sc-verifikasi">0</b></div>
+      <div class="status-chip chip-cyan" onclick="quickFilterStatus('persetujuan verifikasi')"><span>Persetujuan Verifikasi</span><b id="sc-persetujuan-verifikasi">0</b></div>
+      <div class="status-chip chip-purple" onclick="quickFilterStatus('validasi')"><span>Validasi</span><b id="sc-validasi">0</b></div>
+      <div class="status-chip chip-purple" onclick="quickFilterStatus('persetujuan validasi')"><span>Persetujuan Validasi</span><b id="sc-persetujuan-validasi">0</b></div>
+      <div class="status-chip chip-amber" onclick="quickFilterStatus('menunggu pembayaran')"><span>Menunggu Pembayaran</span><b id="sc-menunggu-bayar">0</b></div>
+      <div class="status-chip chip-success" onclick="quickFilterStatus('selesai')"><span>Selesai</span><b id="sc-selesai">0</b></div>
+      <div class="status-chip chip-danger" onclick="quickFilterStatus('di tolak / di gagalkan')"><span>Ditolak / Gagalkan</span><b id="sc-ditolak">0</b></div>
+    </div>
+
+    <!-- Filter Baris Atas & Bawah -->
+    <div class="table-controls">
+      <div class="filter-group-top">
+        <input type="text" id="filter-search" class="input-box search-input" placeholder="Cari NOP, WP, No Register, NTPD..." oninput="debounceSearch()">
+        
+        <select id="filter-jenis" class="input-box select-jenis" onchange="loadDashboard()">
+          <option value="all">Semua Jenis Perolehan</option>
+          <option value="jual beli">Jual Beli</option>
+          <option value="waris">Waris</option>
+          <option value="hibah">Hibah</option>
+          <option value="pembagian hak bersama">Pembagian Hak Bersama</option>
+        </select>
+
+        <select id="filter-status" class="input-box select-status" onchange="loadDashboard()">
+          <option value="all">Semua Status</option>
+          <option value="pengajuan">Pengajuan</option>
+          <option value="pengecekan berkas">Pengecekan Berkas</option>
+          <option value="persetujuan berkas">Persetujuan Berkas</option>
+          <option value="verifikasi">Verifikasi</option>
+          <option value="persetujuan verifikasi">Persetujuan Verifikasi</option>
+          <option value="validasi">Validasi</option>
+          <option value="persetujuan validasi">Persetujuan Validasi</option>
+          <option value="menunggu pembayaran">Menunggu Pembayaran</option>
+          <option value="selesai">Selesai</option>
+          <option value="di tolak / di gagalkan">Di Tolak / Di Gagalkan</option>
+        </select>
+      </div>
+
+      <div class="filter-group-bottom">
+        <button type="button" class="btn-pill" onclick="filterToday()">Hari Ini</button>
+        <button type="button" class="btn-pill" onclick="filterThisMonth()">Bulan Ini</button>
+        <div class="date-input-wrap">
+          <input type="date" id="filter-start-date" class="input-box" onchange="loadDashboard()">
+          <span style="color: var(--text-muted); font-size: 0.8rem;">s/d</span>
+          <input type="date" id="filter-end-date" class="input-box" onchange="loadDashboard()">
+          <button type="button" class="action-btn" onclick="resetDateFilter()">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAMPILAN KOMPUTER: Full Width Data Table -->
+    <div class="table-container" id="desktop-table-container">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>No Register</th>
+              <th>Tgl</th>
+              <th>Jenis</th>
+              <th>Wajib Pajak (WP)</th>
+              <th>NOP</th>
+              <th>Nilai Validasi</th>
+              <th>BPHTB</th>
+              <th>PPH 2,5%</th>
+              <th>NTPD / VA</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr>
+              <td colspan="11" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                Memuat data e-BPHTB...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination-bar">
+        <div>Menampilkan <span id="page-info">0</span> data</div>
+        <div class="page-controls">
+          <button class="btn btn-outline" id="btn-prev" onclick="changePage(-1)">← Prev</button>
+          <button class="btn btn-outline" id="btn-next" onclick="changePage(1)">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAMPILAN HP: Mobile Card Feed -->
+    <div class="mobile-card-container" id="mobile-cards-body"></div>
+
+    <div class="mobile-pagination" id="mobile-pagination-bar">
+      <div>Menampilkan <span id="page-info-mobile">0</span> data</div>
+      <div class="page-controls">
+        <button class="btn btn-outline" id="btn-prev-mobile" onclick="changePage(-1)">← Prev</button>
+        <button class="btn btn-outline" id="btn-next-mobile" onclick="changePage(1)">Next →</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Floating Mobile Navigation -->
+  <div class="mobile-bottom-nav">
+    <button class="nav-item active" onclick="loadDashboard()">
+      <span>🔄</span>
+      <span>Refresh</span>
+    </button>
+    <button class="nav-item" id="btn-mobile-add" onclick="openCreateModal()" style="display: none;">
+      <span style="font-size: 1.25rem; color: var(--primary);">➕</span>
+      <span style="color: var(--primary);">Tambah</span>
+    </button>
+    <button class="nav-item" id="btn-mobile-admin" onclick="toggleAdminMode()">
+      <span id="mobile-admin-icon">🔐</span>
+      <span id="mobile-admin-text">Admin</span>
+    </button>
+  </div>
+
+  <!-- MODAL PENDAFTARAN BARU -->
+  <div class="modal-overlay" id="modal-create">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">+ Input Pendaftaran e-BPHTB Baru</div>
+        <button class="modal-close" onclick="closeModal('modal-create')">&times;</button>
+      </div>
+      <form id="form-create" onsubmit="handleCreateSubmit(event)">
+        <div class="modal-body">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Jenis Perolehan</label>
+              <select id="input-jenis" class="input-box" required onchange="calculateForm()">
+                <option value="Jual Beli">Jual Beli</option>
+                <option value="Waris">Waris</option>
+                <option value="Hibah">Hibah</option>
+                <option value="Pembagian Hak Bersama">Pembagian Hak Bersama</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tanggal Register</label>
+              <input type="date" id="input-tgl" class="input-box" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nama Wajib Pajak (WP)</label>
+            <input type="text" id="input-wp" class="input-box" placeholder="Nama lengkap sesuai KTP" required>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Nomor Objek Pajak (NOP)</label>
+              <input type="text" id="input-nop" class="input-box mono" placeholder="35.29.xxx.xxx.xxx.xxxx.x" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nomor Sertifikat (Opsional)</label>
+              <input type="text" id="input-sertifikat" class="input-box" placeholder="No Hak Milik / Buku">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Luas Tanah (m²)</label>
+              <input type="number" id="input-luas-tanah" class="input-box" placeholder="0" min="0" value="0" oninput="calculateForm()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">NJOP / Tarif Tanah (Rp/m²)</label>
+              <input type="number" id="input-tarif-tanah" class="input-box" placeholder="0" min="0" value="0" oninput="calculateForm()">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Luas Bangunan (m²)</label>
+              <input type="number" id="input-luas-bangunan" class="input-box" placeholder="0" min="0" value="0" oninput="calculateForm()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">NJOP Bangunan (Rp/m²)</label>
+              <input type="number" id="input-tarif-bangunan" class="input-box" placeholder="0" min="0" value="0" oninput="calculateForm()">
+            </div>
+          </div>
+
+          <!-- Live Kalkulator Preview -->
+          <div class="calc-preview">
+            <div class="calc-row">
+              <span style="color: var(--text-muted);">Nilai Tanah:</span>
+              <span class="mono" id="prev-h-tanah">Rp0</span>
+            </div>
+            <div class="calc-row">
+              <span style="color: var(--text-muted);">Nilai Bangunan:</span>
+              <span class="mono" id="prev-h-bangunan">Rp0</span>
+            </div>
+            <div class="calc-row total">
+              <span>Total Nilai Validasi (NPOP):</span>
+              <span class="mono" id="prev-total-npop">Rp0</span>
+            </div>
+            <div class="calc-row">
+              <span style="color: var(--text-muted);">Estimasi BPHTB:</span>
+              <span class="mono" id="prev-bphtb" style="color: #00ffaa; font-weight: 600;">Rp0</span>
+            </div>
+            <div class="calc-row">
+              <span style="color: var(--text-muted);">Estimasi PPH 2,5%:</span>
+              <span class="mono" id="prev-pph" style="color: #00e5ff; font-weight: 600;">Rp0</span>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+            <button type="button" class="btn btn-outline" onclick="closeModal('modal-create')">Batal</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit-create">Simpan Pendaftaran</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL EDIT / KELOLA BERKAS -->
+  <div class="modal-overlay" id="modal-edit">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">Kelola Berkas & Status Alur</div>
+        <button class="modal-close" onclick="closeModal('modal-edit')">&times;</button>
+      </div>
+      <form id="form-edit" onsubmit="handleEditSubmit(event)">
+        <input type="hidden" id="edit-row-index">
+        <input type="hidden" id="edit-jenis">
+        <div class="modal-body">
+          
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">No Register</label>
+              <input type="text" id="edit-noreg" class="input-box mono" placeholder="SMP3529xxxxx" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Wajib Pajak (WP)</label>
+              <input type="text" id="edit-wp" class="input-box" readonly disabled>
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.5px;">
+              Revisi Objek Pajak (Tanah & Bangunan)
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label">Luas Tanah (m²)</label>
+                <input type="number" id="edit-luas-tanah" class="input-box" min="0" placeholder="0" oninput="calculateEditForm()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tarif Tanah (Rp/m²)</label>
+                <input type="number" id="edit-tarif-tanah" class="input-box" min="0" placeholder="0" oninput="calculateEditForm()">
+              </div>
+            </div>
+
+            <div class="form-grid-2" style="margin-top: 0.5rem;">
+              <div class="form-group">
+                <label class="form-label">Luas Bangunan (m²)</label>
+                <input type="number" id="edit-luas-bangunan" class="input-box" min="0" placeholder="0" oninput="calculateEditForm()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tarif Bangunan (Rp/m²)</label>
+                <input type="number" id="edit-tarif-bangunan" class="input-box" min="0" placeholder="0" oninput="calculateEditForm()">
+              </div>
+            </div>
+          </div>
+
+          <div class="calc-preview">
+            <div class="calc-row">
+              <span style="color: var(--text-muted);">Nilai Tanah:</span>
+              <span class="mono" id="edit-prev-h-tanah" style="color: #fff;">Rp0</span>
+            </div>
+            <div class="calc-row">
+              <span style="color: var(--text-muted);">Nilai Bangunan:</span>
+              <span class="mono" id="edit-prev-h-bangunan" style="color: #fff;">Rp0</span>
+            </div>
+            <div class="calc-row total">
+              <span>Total Nilai Validasi (NPOP):</span>
+              <span class="mono" id="edit-prev-total-npop">Rp0</span>
+            </div>
+            <div class="calc-row">
+              <span style="color: var(--text-muted);">BPHTB Terutang:</span>
+              <span class="mono" id="edit-prev-bphtb" style="color: var(--primary); font-weight: 600;">Rp0</span>
+            </div>
+            <div class="calc-row">
+              <span style="color: var(--text-muted);">PPH 2,5%:</span>
+              <span class="mono" id="edit-prev-pph" style="color: var(--accent-cyan); font-weight: 600;">Rp0</span>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Nomor Sertifikat</label>
+              <input type="text" id="edit-sertifikat" class="input-box" placeholder="Contoh: SHM 1234">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status Alur Berkas</label>
+              <select id="edit-status" class="input-box">
+                <option value="Pengajuan">Pengajuan</option>
+                <option value="Pengecekan Berkas">Pengecekan Berkas</option>
+                <option value="Persetujuan Berkas">Persetujuan Berkas</option>
+                <option value="Verifikasi">Verifikasi</option>
+                <option value="Persetujuan Verifikasi">Persetujuan Verifikasi</option>
+                <option value="Validasi">Validasi</option>
+                <option value="Persetujuan Validasi">Persetujuan Validasi</option>
+                <option value="Menunggu Pembayaran">Menunggu Pembayaran</option>
+                <option value="Selesai">Selesai</option>
+                <option value="Di Tolak / Di Gagalkan">Di Tolak / Di Gagalkan</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Nomor NTPD</label>
+              <input type="text" id="edit-ntpd" class="input-box mono" placeholder="Nomor Transaksi Pendapatan Daerah">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nomor Virtual Account (No VA)</label>
+              <input type="text" id="edit-nova" class="input-box mono" placeholder="Nomor VA Bank Jatim / Persepsi">
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+            <button type="button" class="btn btn-outline" onclick="closeModal('modal-edit')">Tutup</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit-edit">Perbarui Berkas</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL AUTENTIKASI PASSWORD ADMIN (SENSOR TITIK) -->
+  <div class="modal-overlay" id="modal-auth">
+    <div class="modal-card" style="max-width: 380px;">
+      <div class="modal-header">
+        <div class="modal-title">🔐 Autentikasi Admin</div>
+        <button class="modal-close" onclick="closeModal('modal-auth')">&times;</button>
+      </div>
+      <form id="form-auth" onsubmit="handleAuthSubmit(event)">
+        <div class="modal-body" style="gap: 1rem;">
+          <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+            Masukkan password rahasia untuk membuka hak akses tambah berkas dan kelola data.
+          </p>
+
+          <div class="form-group">
+            <label class="form-label">Password Admin</label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input 
+                type="password" 
+                id="input-admin-pass" 
+                class="input-box mono" 
+                placeholder="••••••••" 
+                required 
+                style="width: 100%; padding-right: 2.5rem; font-size: 1rem; letter-spacing: 1px;"
+                autocomplete="current-password"
+              >
+              <button 
+                type="button" 
+                onclick="togglePasswordVisibility()" 
+                style="position: absolute; right: 0.75rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; line-height: 1;"
+                title="Lihat / Sembunyikan Password"
+              >👁️</button>
+            </div>
+            <span id="auth-error-msg" style="display: none; color: var(--accent-danger); font-size: 0.75rem; font-weight: 600; margin-top: 0.2rem;">
+              ⚠️ Password salah! Silakan coba lagi.
+            </span>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem;">
+            <button type="button" class="btn btn-outline" onclick="closeModal('modal-auth')">Batal</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit-auth">Masuk</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFIKASI -->
+  <div class="toast" id="toast-msg">Notifikasi pesan</div>
+
+  <script>
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzFTa-4rYUajcyUwu00tcLKSoqkHYDd6Z7vtUWy49axL9WOQXXHz_FnktZ97swWBs2b/exec";
+
+    var state = {
+      currentPage: 1,
+      pageSize: 15,
+      cachedItems: [],
+      isAdmin: false
+    };
+
+    var searchTimer = null;
+
+    try {
+      if (sessionStorage.getItem("bphtb_admin_auth") === "true") {
+        state.isAdmin = true;
+      }
+    } catch (e) {
+      console.warn("Session storage warning:", e);
+    }
+
+    function showToast(msg) {
+      var toast = document.getElementById("toast-msg");
+      if (!toast) return;
+      toast.innerText = msg;
+      toast.classList.add("show");
+      setTimeout(function() {
+        toast.classList.remove("show");
+      }, 3500);
+    }
+
+    function openModal(id) {
+      var elem = document.getElementById(id);
+      if (elem) elem.classList.add("active");
+    }
+
+    function closeModal(id) {
+      var elem = document.getElementById(id);
+      if (elem) elem.classList.remove("active");
+    }
+
+    function setElementText(id, text) {
+      var el = document.getElementById(id);
+      if (el) el.innerText = (text !== undefined && text !== null) ? text : "";
+    }
+
+    function getInputValue(id, fallback) {
+      var el = document.getElementById(id);
+      return (el && el.value !== undefined) ? el.value : (fallback || "");
+    }
+
+    function toggleAdminMode() {
+      if (state.isAdmin) {
+        if (confirm("Apakah Anda yakin ingin keluar dari Mode Admin?")) {
+          try {
+            sessionStorage.removeItem("bphtb_admin_auth");
+            sessionStorage.removeItem("bphtb_admin_pin");
+          } catch (e) {}
+          state.isAdmin = false;
+          updateAdminUI();
+          showToast("Telah beralih ke Mode Tamu (Hanya Lihat).");
+          loadDashboard();
+        }
+      } else {
+        var passInput = document.getElementById("input-admin-pass");
+        var errorMsg = document.getElementById("auth-error-msg");
+        if (passInput) {
+          passInput.value = "";
+          passInput.type = "password";
+        }
+        if (errorMsg) errorMsg.style.display = "none";
+        
+        openModal("modal-auth");
+        setTimeout(function() {
+          if (passInput) passInput.focus();
+        }, 150);
+      }
+    }
+
+    function togglePasswordVisibility() {
+      var passInput = document.getElementById("input-admin-pass");
+      if (passInput) {
+        passInput.type = passInput.type === "password" ? "text" : "password";
+      }
+    }
+
+    function handleAuthSubmit(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      var passInput = document.getElementById("input-admin-pass");
+      var errorMsg = document.getElementById("auth-error-msg");
+      var enteredPass = passInput ? passInput.value.trim() : "";
+
+      if (enteredPass === "adminNOT") {
+        try {
+          sessionStorage.setItem("bphtb_admin_auth", "true");
+          sessionStorage.setItem("bphtb_admin_pin", enteredPass);
+        } catch (err) {}
+        state.isAdmin = true;
+        closeModal("modal-auth");
+        updateAdminUI();
+        showToast("Mode Admin aktif! Hak akses edit & tambah berkas terbuka.");
+        loadDashboard();
+      } else {
+        if (errorMsg) errorMsg.style.display = "block";
+        if (passInput) {
+          passInput.value = "";
+          passInput.focus();
+        }
+      }
+    }
+
+    function updateAdminUI() {
+      var btnAdmin = document.getElementById("btn-admin-auth");
+      if (btnAdmin) {
+        if (state.isAdmin) {
+          btnAdmin.innerText = "🔓 Keluar Admin";
+          btnAdmin.classList.add("btn-danger-soft");
+        } else {
+          btnAdmin.innerText = "🔐 Masuk Admin";
+          btnAdmin.classList.remove("btn-danger-soft");
+        }
+      }
+
+      var btnAdd = document.getElementById("btn-add-record");
+      if (btnAdd) btnAdd.style.display = state.isAdmin ? "inline-flex" : "none";
+
+      var btnMobileAdd = document.getElementById("btn-mobile-add");
+      if (btnMobileAdd) btnMobileAdd.style.display = state.isAdmin ? "flex" : "none";
+
+      var iconMobileAdmin = document.getElementById("mobile-admin-icon");
+      var textMobileAdmin = document.getElementById("mobile-admin-text");
+      if (iconMobileAdmin && textMobileAdmin) {
+        iconMobileAdmin.innerText = state.isAdmin ? "🔓" : "🔐";
+        textMobileAdmin.innerText = state.isAdmin ? "Keluar" : "Admin";
+        textMobileAdmin.style.color = state.isAdmin ? "var(--accent-danger)" : "var(--text-muted)";
+      }
+    }
+
+    function openCreateModal() {
+      if (!state.isAdmin) {
+        alert("Akses Terkunci: Hanya Admin yang dapat menambah berkas.");
+        return;
+      }
+      var form = document.getElementById("form-create");
+      if (form) form.reset();
+      var tglElem = document.getElementById("input-tgl");
+      if (tglElem) tglElem.value = new Date().toISOString().split('T')[0];
+      calculateForm();
+      openModal("modal-create");
+    }
+
+    function calculateForm() {
+      var jenis = getInputValue("input-jenis", "jual beli").toLowerCase();
+      var lt = parseFloat(getInputValue("input-luas-tanah", 0)) || 0;
+      var tt = parseFloat(getInputValue("input-tarif-tanah", 0)) || 0;
+      var lb = parseFloat(getInputValue("input-luas-bangunan", 0)) || 0;
+      var tb = parseFloat(getInputValue("input-tarif-bangunan", 0)) || 0;
+
+      var hTanah = lt * tt;
+      var hBangunan = lb * tb;
+      var totalNpop = hTanah + hBangunan;
+
+      var bphtb = 0;
+      var pph = 0;
+
+      if (jenis === "waris") {
+        var kenaPajakWaris = Math.max(0, totalNpop - 300000000);
+        bphtb = Math.round(kenaPajakWaris * 0.03);
+        pph = 0;
+      } else {
+        var kenaPajakReguler = Math.max(0, totalNpop - 80000000);
+        bphtb = Math.round(kenaPajakReguler * 0.04);
+        pph = Math.round(totalNpop * 0.025);
+      }
+
+      setElementText("prev-h-tanah", "Rp" + hTanah.toLocaleString("id-ID"));
+      setElementText("prev-h-bangunan", "Rp" + hBangunan.toLocaleString("id-ID"));
+      setElementText("prev-total-npop", "Rp" + totalNpop.toLocaleString("id-ID"));
+      setElementText("prev-bphtb", bphtb > 0 ? "Rp" + bphtb.toLocaleString("id-ID") : "-");
+      setElementText("prev-pph", pph > 0 ? "Rp" + pph.toLocaleString("id-ID") : "-");
+    }
+
+    function calculateEditForm() {
+      var jenis = getInputValue("edit-jenis", "jual beli").toLowerCase();
+      var lt = parseFloat(getInputValue("edit-luas-tanah", 0)) || 0;
+      var tt = parseFloat(getInputValue("edit-tarif-tanah", 0)) || 0;
+      var lb = parseFloat(getInputValue("edit-luas-bangunan", 0)) || 0;
+      var tb = parseFloat(getInputValue("edit-tarif-bangunan", 0)) || 0;
+
+      var hTanah = lt * tt;
+      var hBangunan = lb * tb;
+      var totalNpop = hTanah + hBangunan;
+
+      var bphtb = 0;
+      var pph = 0;
+
+      if (jenis === "waris") {
+        var kenaPajakWaris = Math.max(0, totalNpop - 300000000);
+        bphtb = Math.round(kenaPajakWaris * 0.03);
+        pph = 0;
+      } else {
+        var kenaPajakReguler = Math.max(0, totalNpop - 80000000);
+        bphtb = Math.round(kenaPajakReguler * 0.04);
+        pph = Math.round(totalNpop * 0.025);
+      }
+
+      setElementText("edit-prev-h-tanah", "Rp" + hTanah.toLocaleString("id-ID"));
+      setElementText("edit-prev-h-bangunan", "Rp" + hBangunan.toLocaleString("id-ID"));
+      setElementText("edit-prev-total-npop", "Rp" + totalNpop.toLocaleString("id-ID"));
+      setElementText("edit-prev-bphtb", bphtb > 0 ? "Rp" + bphtb.toLocaleString("id-ID") : "-");
+      setElementText("edit-prev-pph", pph > 0 ? "Rp" + pph.toLocaleString("id-ID") : "-");
+    }
+
+    function parseDimensionString(str) {
+      if (!str) return { luas: 0, tarif: 0 };
+      var cleaned = str.toString().replace(/&#9;/g, "").trim();
+      var parts = cleaned.split("x");
+      if (parts.length === 2) {
+        var luas = parseFloat(parts[0].replace(/[^0-9.]/g, "")) || 0;
+        var tarif = parseFloat(parts[1].replace(/[^0-9.]/g, "")) || 0;
+        return { luas: luas, tarif: tarif };
+      }
+      return { luas: 0, tarif: 0 };
+    }
+
+    function debounceSearch() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function() {
+        state.currentPage = 1;
+        loadDashboard();
+      }, 400);
+    }
+
+    function resetDateFilter() {
+      var s = document.getElementById("filter-start-date");
+      var e = document.getElementById("filter-end-date");
+      if (s) s.value = "";
+      if (e) e.value = "";
+      state.currentPage = 1;
+      loadDashboard();
+    }
+
+    function formatDateToYMD(d) {
+      var year = d.getFullYear();
+      var month = ("0" + (d.getMonth() + 1)).slice(-2);
+      var day = ("0" + d.getDate()).slice(-2);
+      return year + "-" + month + "-" + day;
+    }
+
+    function filterToday() {
+      var todayStr = formatDateToYMD(new Date());
+      var s = document.getElementById("filter-start-date");
+      var e = document.getElementById("filter-end-date");
+      if (s) s.value = todayStr;
+      if (e) e.value = todayStr;
+      state.currentPage = 1;
+      showToast("Filter hari ini (" + todayStr + ")");
+      loadDashboard();
+    }
+
+    function filterThisMonth() {
+      var now = new Date();
+      var firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      var lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+      var s = document.getElementById("filter-start-date");
+      var e = document.getElementById("filter-end-date");
+      if (s) s.value = formatDateToYMD(firstDay);
+      if (e) e.value = formatDateToYMD(lastDay);
+      state.currentPage = 1;
+      showToast("Filter bulan berjalan");
+      loadDashboard();
+    }
+
+    function quickFilterStatus(statusVal) {
+      var selectElem = document.getElementById("filter-status");
+      if (selectElem) {
+        selectElem.value = statusVal;
+        state.currentPage = 1;
+        loadDashboard();
+      }
+    }
+
+    function getStatusBadgeClass(status) {
+      if (!status) return "badge-gray";
+      var st = status.toString().toLowerCase();
+
+      if (st.indexOf("tolak") !== -1 || st.indexOf("gagalkan") !== -1) return "badge-danger";
+      if (st.indexOf("selesai") !== -1) return "badge-success";
+      if (st.indexOf("menunggu pembayaran") !== -1) return "badge-amber";
+      if (st.indexOf("persetujuan validasi") !== -1) return "badge-purple";
+      if (st.indexOf("validasi") !== -1) return "badge-purple";
+      if (st.indexOf("persetujuan verifikasi") !== -1) return "badge-cyan";
+      if (st.indexOf("verifikasi") !== -1) return "badge-cyan";
+      if (st.indexOf("persetujuan berkas") !== -1) return "badge-blue";
+      if (st.indexOf("pengecekan berkas") !== -1) return "badge-blue";
+      return "badge-gray";
+    }
+
+    async function loadDashboard() {
+      var queryParams = new URLSearchParams({
+        action: "getDashboard",
+        search: getInputValue("filter-search"),
+        jenis: getInputValue("filter-jenis", "all"),
+        status: getInputValue("filter-status", "all"),
+        startDate: getInputValue("filter-start-date"),
+        endDate: getInputValue("filter-end-date"),
+        page: state.currentPage,
+        pageSize: state.pageSize
+      });
+
+      var tbody = document.getElementById("table-body");
+      var mobileCards = document.getElementById("mobile-cards-body");
+      if (tbody) tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 3rem; color: var(--text-muted);">Memuat data e-BPHTB...</td></tr>';
+      if (mobileCards) mobileCards.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Memuat data e-BPHTB...</div>';
+
+      try {
+        const response = await fetch(GAS_API_URL + "?" + queryParams.toString());
+        const json = await response.json();
+
+        if (!json.success) {
+          throw new Error(json.error || "Gagal memuat data.");
+        }
+
+        renderDashboard(json.data);
+      } catch (err) {
+        var errTxt = (err && err.message) ? err.message : String(err);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 2rem; color: #f87171;">⚠️ Gagal: ' + errTxt + '</td></tr>';
+        if (mobileCards) mobileCards.innerHTML = '<div style="text-align: center; padding: 2rem; color: #f87171;">⚠️ Gagal: ' + errTxt + '</div>';
+        showToast("Error: " + errTxt);
+      }
+    }
+
+    function renderDashboard(res) {
+      if (!res) return;
+
+      if (res.stats) {
+        setElementText("stat-total", res.stats.total || 0);
+        setElementText("stat-selesai", res.stats.selesai || 0);
+        setElementText("stat-ditolak", res.stats.ditolak || 0);
+        setElementText("stat-bphtb", res.stats.totalBphtb || "Rp0");
+      }
+
+      var sc = res.statusCounts || {};
+      setElementText("sc-all", (res.stats && res.stats.total) ? res.stats.total : 0);
+      setElementText("sc-pengajuan", sc["pengajuan"] || 0);
+      setElementText("sc-pengecekan", sc["pengecekan berkas"] || 0);
+      setElementText("sc-persetujuan-berkas", sc["persetujuan berkas"] || 0);
+      setElementText("sc-verifikasi", sc["verifikasi"] || 0);
+      setElementText("sc-persetujuan-verifikasi", sc["persetujuan verifikasi"] || 0);
+      setElementText("sc-validasi", sc["validasi"] || 0);
+      setElementText("sc-persetujuan-validasi", sc["persetujuan validasi"] || 0);
+      setElementText("sc-menunggu-bayar", sc["menunggu pembayaran"] || 0);
+      setElementText("sc-selesai", sc["selesai"] || 0);
+      setElementText("sc-ditolak", sc["di tolak / di gagalkan"] || 0);
+
+      var tbody = document.getElementById("table-body");
+      var mobileCards = document.getElementById("mobile-cards-body");
+      state.cachedItems = res.items || [];
+
+      var tableHtml = "";
+      var cardHtml = "";
+      var actionBtnLabel = state.isAdmin ? "Kelola" : "Rincian";
+
+      if (!res.items || res.items.length === 0) {
+        tableHtml = '<tr><td colspan="11" style="text-align: center; padding: 3rem; color: var(--text-muted);">Tidak ada berkas yang sesuai filter.</td></tr>';
+        cardHtml = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada berkas yang sesuai filter.</div>';
+      } else {
+        for (var i = 0; i < res.items.length; i++) {
+          var item = res.items[i];
+          var badgeClass = getStatusBadgeClass(item.status);
+          var displayBphtb = item.jenis === "Waris" ? (item.bphtbWaris || "-") : (item.bphtb || "-");
+          var displayNtpdVa = (item.ntpd || "-") + " / " + (item.noVa || "-");
+
+          tableHtml += '<tr>' +
+            '<td class="mono" style="font-weight: 600; color: #00ffaa;">' + (item.noReg || "-") + '</td>' +
+            '<td style="color: var(--text-muted);">' + (item.tglReg || "-") + '</td>' +
+            '<td>' + (item.jenis || "-") + '</td>' +
+            '<td style="font-weight: 600;">' + (item.wp || "-") + '</td>' +
+            '<td class="mono">' + (item.nop || "-") + '</td>' +
+            '<td class="mono">' + (item.nilaiValidasi || "-") + '</td>' +
+            '<td class="mono" style="color: #00ffaa;">' + displayBphtb + '</td>' +
+            '<td class="mono" style="color: #00e5ff;">' + (item.pph || "-") + '</td>' +
+            '<td class="mono" style="font-size: 0.75rem;">' + displayNtpdVa + '</td>' +
+            '<td><span class="badge ' + badgeClass + '">' + (item.status || "Pengajuan") + '</span></td>' +
+            '<td><button class="action-btn" onclick="openEditModal(' + item.rowIndex + ')">' + actionBtnLabel + '</button></td>' +
+          '</tr>';
+
+          cardHtml += '<div class="bphtb-card-mobile">' +
+            '<div class="card-top">' +
+              '<span class="card-noreg mono">' + (item.noReg || "-") + '</span>' +
+              '<span class="card-date">' + (item.tglReg || "-") + '</span>' +
+            '</div>' +
+            '<div>' +
+              '<div class="card-wp">' + (item.wp || "-") + '</div>' +
+              '<div class="card-nop mono">' + (item.nop || "-") + ' • ' + (item.jenis || "") + '</div>' +
+            '</div>' +
+            '<div class="card-finance-grid">' +
+              '<div class="card-fin-item"><span>Nilai Validasi:</span><b>' + (item.nilaiValidasi || "Rp0") + '</b></div>' +
+              '<div class="card-fin-item"><span>BPHTB:</span><b style="color: #00ffaa;">' + displayBphtb + '</b></div>' +
+              '<div class="card-fin-item"><span>PPH 2,5%:</span><b style="color: #00e5ff;">' + (item.pph || "-") + '</b></div>' +
+              '<div class="card-fin-item"><span>NTPD / VA:</span><b style="font-size: 0.72rem;">' + displayNtpdVa + '</b></div>' +
+            '</div>' +
+            '<div class="card-footer-action">' +
+              '<span class="badge ' + badgeClass + '">' + (item.status || "Pengajuan") + '</span>' +
+              '<button class="action-btn" style="padding: 0.45rem 1.1rem; border-color: var(--primary);" onclick="openEditModal(' + item.rowIndex + ')">' + actionBtnLabel + '</button>' +
+            '</div>' +
+          '</div>';
+        }
+      }
+
+      if (tbody) tbody.innerHTML = tableHtml;
+      if (mobileCards) mobileCards.innerHTML = cardHtml;
+
+      var pageText = (res.totalFiltered || 0) + " (Hal " + (res.page || 1) + "/" + (res.totalPages || 1) + ")";
+      setElementText("page-info", pageText);
+      setElementText("page-info-mobile", pageText);
+
+      var isFirst = ((res.page || 1) <= 1);
+      var isLast = ((res.page || 1) >= (res.totalPages || 1));
+
+      if (document.getElementById("btn-prev")) document.getElementById("btn-prev").disabled = isFirst;
+      if (document.getElementById("btn-next")) document.getElementById("btn-next").disabled = isLast;
+      if (document.getElementById("btn-prev-mobile")) document.getElementById("btn-prev-mobile").disabled = isFirst;
+      if (document.getElementById("btn-next-mobile")) document.getElementById("btn-next-mobile").disabled = isLast;
+    }
+
+    function changePage(delta) {
+      state.currentPage += delta;
+      if (state.currentPage < 1) state.currentPage = 1;
+      loadDashboard();
+    }
+
+    function openEditModal(rowIndex) {
+      var item = state.cachedItems.find(function(it) { return it.rowIndex === rowIndex; });
+      if (!item) return;
+
+      var elRow = document.getElementById("edit-row-index");
+      var elJenis = document.getElementById("edit-jenis");
+      var elNoreg = document.getElementById("edit-noreg");
+      var elWp = document.getElementById("edit-wp");
+      var elSert = document.getElementById("edit-sertifikat");
+      var elStatus = document.getElementById("edit-status");
+      var elNtpd = document.getElementById("edit-ntpd");
+      var elNova = document.getElementById("edit-nova");
+
+      if (elRow) elRow.value = item.rowIndex;
+      if (elJenis) elJenis.value = item.jenis || "Jual Beli";
+      if (elNoreg) elNoreg.value = item.noReg || "";
+      if (elWp) elWp.value = item.wp || "";
+      if (elSert) elSert.value = item.noSertifikat || "";
+      if (elStatus) elStatus.value = item.status || "Pengajuan";
+      if (elNtpd) elNtpd.value = item.ntpd || "";
+      if (elNova) elNova.value = item.noVa || "";
+
+      var tanahObj = parseDimensionString(item.luasTanahStr);
+      var bangunanObj = parseDimensionString(item.bangunanStr);
+
+      var elLt = document.getElementById("edit-luas-tanah");
+      var elTt = document.getElementById("edit-tarif-tanah");
+      var elLb = document.getElementById("edit-luas-bangunan");
+      var elTb = document.getElementById("edit-tarif-bangunan");
+
+      if (elLt) elLt.value = tanahObj.luas;
+      if (elTt) elTt.value = tanahObj.tarif;
+      if (elLb) elLb.value = bangunanObj.luas;
+      if (elTb) elTb.value = bangunanObj.tarif;
+
+      calculateEditForm();
+
+      var inputs = ["edit-noreg", "edit-luas-tanah", "edit-tarif-tanah", "edit-luas-bangunan", "edit-tarif-bangunan", "edit-sertifikat", "edit-status", "edit-ntpd", "edit-nova"];
+      for (var i = 0; i < inputs.length; i++) {
+        var el = document.getElementById(inputs[i]);
+        if (el) {
+          el.disabled = !state.isAdmin;
+          if (!state.isAdmin) el.setAttribute("readonly", true);
+          else el.removeAttribute("readonly");
+        }
+      }
+
+      var btnSubmit = document.getElementById("btn-submit-edit");
+      if (btnSubmit) btnSubmit.style.display = state.isAdmin ? "inline-flex" : "none";
+
+      openModal("modal-edit");
+    }
+
+    async function handleCreateSubmit(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      if (!state.isAdmin) {
+        alert("Akses ditolak: Hanya admin!");
+        return;
+      }
+
+      var btn = document.getElementById("btn-submit-create");
+      if (btn) {
+        btn.innerText = "Menyimpan...";
+        btn.disabled = true;
+      }
+
+      var savedPin = "adminNOT";
+      try {
+        var p = sessionStorage.getItem("bphtb_admin_pin");
+        if (p) savedPin = p;
+      } catch (err) {}
+
+      var payload = {
+        adminPin: savedPin,
+        jenis: getInputValue("input-jenis"),
+        tglRegister: getInputValue("input-tgl"),
+        wp: getInputValue("input-wp"),
+        nop: getInputValue("input-nop"),
+        noSertifikat: getInputValue("input-sertifikat"),
+        luasTanah: getInputValue("input-luas-tanah"),
+        tarifTanah: getInputValue("input-tarif-tanah"),
+        luasBangunan: getInputValue("input-luas-bangunan"),
+        tarifBangunan: getInputValue("input-tarif-bangunan"),
+        status: "Pengajuan"
+      };
+
+      try {
+        const response = await fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "create", payload: payload })
+        });
+        const res = await response.json();
+
+        if (btn) {
+          btn.innerText = "Simpan Pendaftaran";
+          btn.disabled = false;
+        }
+
+        if (!res.success) {
+          throw new Error(res.error || "Gagal menyimpan pendaftaran.");
+        }
+
+        closeModal("modal-create");
+        showToast((res && res.message) ? res.message : "Data berhasil disimpan!");
+        loadDashboard();
+      } catch (err) {
+        if (btn) {
+          btn.innerText = "Simpan Pendaftaran";
+          btn.disabled = false;
+        }
+        alert("Gagal: " + ((err && err.message) ? err.message : String(err)));
+      }
+    }
+
+    async function handleEditSubmit(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      if (!state.isAdmin) {
+        alert("Akses ditolak: Anda harus login sebagai admin!");
+        return;
+      }
+
+      var rowVal = getInputValue("edit-row-index");
+      if (!rowVal) {
+        alert("Error: Nomor baris data tidak terdeteksi. Silakan klik Kelola kembali.");
+        return;
+      }
+
+      var btn = document.getElementById("btn-submit-edit");
+      if (btn) {
+        btn.innerText = "Menyimpan...";
+        btn.disabled = true;
+      }
+
+      var savedPin = "adminNOT";
+      try {
+        var p = sessionStorage.getItem("bphtb_admin_pin");
+        if (p) savedPin = p;
+      } catch (err) {}
+
+      var payload = {
+        adminPin: savedPin,
+        rowIndex: rowVal,
+        noRegister: getInputValue("edit-noreg"),
+        jenis: getInputValue("edit-jenis"),
+        luasTanah: getInputValue("edit-luas-tanah"),
+        tarifTanah: getInputValue("edit-tarif-tanah"),
+        luasBangunan: getInputValue("edit-luas-bangunan"),
+        tarifBangunan: getInputValue("edit-tarif-bangunan"),
+        noSertifikat: getInputValue("edit-sertifikat"),
+        status: getInputValue("edit-status"),
+        ntpd: getInputValue("edit-ntpd"),
+        noVa: getInputValue("edit-nova")
+      };
+
+      try {
+        const response = await fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "update", payload: payload })
+        });
+        const res = await response.json();
+
+        if (btn) {
+          btn.innerText = "Perbarui Berkas";
+          btn.disabled = false;
+        }
+
+        if (!res.success) {
+          throw new Error(res.error || "Gagal memperbarui berkas.");
+        }
+
+        closeModal("modal-edit");
+        showToast((res && res.message) ? res.message : "Data berhasil diperbarui!");
+        loadDashboard();
+      } catch (err) {
+        if (btn) {
+          btn.innerText = "Perbarui Berkas";
+          btn.disabled = false;
+        }
+        var errMsg = (err && err.message) ? err.message : String(err);
+        alert("Gagal memperbarui berkas:\n" + errMsg);
+      }
+    }
+
+    window.onload = function() {
+      updateAdminUI();
+      loadDashboard();
+    };
+  </script>
+</body>
+</html>
