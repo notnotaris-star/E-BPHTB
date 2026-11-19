@@ -1,0 +1,601 @@
+<script>
+  var state = {
+    currentPage: 1,
+    pageSize: 15,
+    cachedItems: [],
+    isAdmin: false
+  };
+
+  var searchTimer = null;
+
+  try {
+    if (sessionStorage.getItem("bphtb_admin_auth") === "true") {
+      state.isAdmin = true;
+    }
+  } catch (e) {
+    console.warn("Session storage warning:", e);
+  }
+
+  function showToast(msg) {
+    var toast = document.getElementById("toast-msg");
+    if (!toast) return;
+    toast.innerText = msg;
+    toast.classList.add("show");
+    setTimeout(function() {
+      toast.classList.remove("show");
+    }, 3500);
+  }
+
+  function openModal(id) {
+    var elem = document.getElementById(id);
+    if (elem) elem.classList.add("active");
+  }
+
+  function closeModal(id) {
+    var elem = document.getElementById(id);
+    if (elem) elem.classList.remove("active");
+  }
+
+  function setElementText(id, text) {
+    var el = document.getElementById(id);
+    if (el) el.innerText = (text !== undefined && text !== null) ? text : "";
+  }
+
+  function getInputValue(id, fallback) {
+    var el = document.getElementById(id);
+    return (el && el.value !== undefined) ? el.value : (fallback || "");
+  }
+
+  function toggleAdminMode() {
+    if (state.isAdmin) {
+      if (confirm("Apakah Anda yakin ingin keluar dari Mode Admin?")) {
+        try {
+          sessionStorage.removeItem("bphtb_admin_auth");
+          sessionStorage.removeItem("bphtb_admin_pin");
+        } catch (e) {}
+        state.isAdmin = false;
+        updateAdminUI();
+        showToast("Telah beralih ke Mode Tamu (Hanya Lihat).");
+        loadDashboard();
+      }
+    } else {
+      var passInput = document.getElementById("input-admin-pass");
+      var errorMsg = document.getElementById("auth-error-msg");
+      if (passInput) {
+        passInput.value = "";
+        passInput.type = "password";
+      }
+      if (errorMsg) errorMsg.style.display = "none";
+      
+      openModal("modal-auth");
+      setTimeout(function() {
+        if (passInput) passInput.focus();
+      }, 150);
+    }
+  }
+
+  function togglePasswordVisibility() {
+    var passInput = document.getElementById("input-admin-pass");
+    if (passInput) {
+      passInput.type = passInput.type === "password" ? "text" : "password";
+    }
+  }
+
+  function handleAuthSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    var passInput = document.getElementById("input-admin-pass");
+    var errorMsg = document.getElementById("auth-error-msg");
+    var enteredPass = passInput ? passInput.value.trim() : "";
+
+    if (enteredPass === "adminNOT") {
+      try {
+        sessionStorage.setItem("bphtb_admin_auth", "true");
+        sessionStorage.setItem("bphtb_admin_pin", enteredPass);
+      } catch (err) {}
+      state.isAdmin = true;
+      closeModal("modal-auth");
+      updateAdminUI();
+      showToast("Mode Admin aktif! Hak akses edit & tambah berkas terbuka.");
+      loadDashboard();
+    } else {
+      if (errorMsg) errorMsg.style.display = "block";
+      if (passInput) {
+        passInput.value = "";
+        passInput.focus();
+      }
+    }
+  }
+
+  function updateAdminUI() {
+    var btnAdmin = document.getElementById("btn-admin-auth");
+    if (btnAdmin) {
+      if (state.isAdmin) {
+        btnAdmin.innerText = "🔓 Keluar Admin";
+        btnAdmin.classList.add("btn-danger-soft");
+      } else {
+        btnAdmin.innerText = "🔐 Masuk Admin";
+        btnAdmin.classList.remove("btn-danger-soft");
+      }
+    }
+
+    var btnAdd = document.getElementById("btn-add-record");
+    if (btnAdd) btnAdd.style.display = state.isAdmin ? "inline-flex" : "none";
+
+    var btnMobileAdd = document.getElementById("btn-mobile-add");
+    if (btnMobileAdd) btnMobileAdd.style.display = state.isAdmin ? "flex" : "none";
+
+    var iconMobileAdmin = document.getElementById("mobile-admin-icon");
+    var textMobileAdmin = document.getElementById("mobile-admin-text");
+    if (iconMobileAdmin && textMobileAdmin) {
+      iconMobileAdmin.innerText = state.isAdmin ? "🔓" : "🔐";
+      textMobileAdmin.innerText = state.isAdmin ? "Keluar" : "Admin";
+      textMobileAdmin.style.color = state.isAdmin ? "var(--accent-danger)" : "var(--text-muted)";
+    }
+  }
+
+  function openCreateModal() {
+    if (!state.isAdmin) {
+      alert("Akses Terkunci: Hanya Admin yang dapat menambah berkas.");
+      return;
+    }
+    var form = document.getElementById("form-create");
+    if (form) form.reset();
+    var tglElem = document.getElementById("input-tgl");
+    if (tglElem) tglElem.value = new Date().toISOString().split('T')[0];
+    calculateForm();
+    openModal("modal-create");
+  }
+
+  function calculateForm() {
+    var jenis = getInputValue("input-jenis", "jual beli").toLowerCase();
+    var lt = parseFloat(getInputValue("input-luas-tanah", 0)) || 0;
+    var tt = parseFloat(getInputValue("input-tarif-tanah", 0)) || 0;
+    var lb = parseFloat(getInputValue("input-luas-bangunan", 0)) || 0;
+    var tb = parseFloat(getInputValue("input-tarif-bangunan", 0)) || 0;
+
+    var hTanah = lt * tt;
+    var hBangunan = lb * tb;
+    var totalNpop = hTanah + hBangunan;
+
+    var bphtb = 0;
+    var pph = 0;
+
+    if (jenis === "waris") {
+      var kenaPajakWaris = Math.max(0, totalNpop - 300000000);
+      bphtb = Math.round(kenaPajakWaris * 0.03);
+      pph = 0;
+    } else {
+      var kenaPajakReguler = Math.max(0, totalNpop - 80000000);
+      bphtb = Math.round(kenaPajakReguler * 0.04);
+      pph = Math.round(totalNpop * 0.025);
+    }
+
+    setElementText("prev-h-tanah", "Rp" + hTanah.toLocaleString("id-ID"));
+    setElementText("prev-h-bangunan", "Rp" + hBangunan.toLocaleString("id-ID"));
+    setElementText("prev-total-npop", "Rp" + totalNpop.toLocaleString("id-ID"));
+    setElementText("prev-bphtb", bphtb > 0 ? "Rp" + bphtb.toLocaleString("id-ID") : "-");
+    setElementText("prev-pph", pph > 0 ? "Rp" + pph.toLocaleString("id-ID") : "-");
+  }
+
+  function calculateEditForm() {
+    var jenis = getInputValue("edit-jenis", "jual beli").toLowerCase();
+    var lt = parseFloat(getInputValue("edit-luas-tanah", 0)) || 0;
+    var tt = parseFloat(getInputValue("edit-tarif-tanah", 0)) || 0;
+    var lb = parseFloat(getInputValue("edit-luas-bangunan", 0)) || 0;
+    var tb = parseFloat(getInputValue("edit-tarif-bangunan", 0)) || 0;
+
+    var hTanah = lt * tt;
+    var hBangunan = lb * tb;
+    var totalNpop = hTanah + hBangunan;
+
+    var bphtb = 0;
+    var pph = 0;
+
+    if (jenis === "waris") {
+      var kenaPajakWaris = Math.max(0, totalNpop - 300000000);
+      bphtb = Math.round(kenaPajakWaris * 0.03);
+      pph = 0;
+    } else {
+      var kenaPajakReguler = Math.max(0, totalNpop - 80000000);
+      bphtb = Math.round(kenaPajakReguler * 0.04);
+      pph = Math.round(totalNpop * 0.025);
+    }
+
+    setElementText("edit-prev-h-tanah", "Rp" + hTanah.toLocaleString("id-ID"));
+    setElementText("edit-prev-h-bangunan", "Rp" + hBangunan.toLocaleString("id-ID"));
+    setElementText("edit-prev-total-npop", "Rp" + totalNpop.toLocaleString("id-ID"));
+    setElementText("edit-prev-bphtb", bphtb > 0 ? "Rp" + bphtb.toLocaleString("id-ID") : "-");
+    setElementText("edit-prev-pph", pph > 0 ? "Rp" + pph.toLocaleString("id-ID") : "-");
+  }
+
+  function parseDimensionString(str) {
+    if (!str) return { luas: 0, tarif: 0 };
+    var cleaned = str.toString().replace(/&#9;/g, "").trim();
+    var parts = cleaned.split("x");
+    if (parts.length === 2) {
+      var luas = parseFloat(parts[0].replace(/[^0-9.]/g, "")) || 0;
+      var tarif = parseFloat(parts[1].replace(/[^0-9]/g, "")) || 0;
+      return { luas: luas, tarif: tarif };
+    }
+    return { luas: 0, tarif: 0 };
+  }
+
+  function debounceSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function() {
+      state.currentPage = 1;
+      loadDashboard();
+    }, 400);
+  }
+
+  function resetDateFilter() {
+    var s = document.getElementById("filter-start-date");
+    var e = document.getElementById("filter-end-date");
+    if (s) s.value = "";
+    if (e) e.value = "";
+    state.currentPage = 1;
+    loadDashboard();
+  }
+
+  function formatDateToYMD(d) {
+    var year = d.getFullYear();
+    var month = ("0" + (d.getMonth() + 1)).slice(-2);
+    var day = ("0" + d.getDate()).slice(-2);
+    return year + "-" + month + "-" + day;
+  }
+
+  function filterToday() {
+    var todayStr = formatDateToYMD(new Date());
+    var s = document.getElementById("filter-start-date");
+    var e = document.getElementById("filter-end-date");
+    if (s) s.value = todayStr;
+    if (e) e.value = todayStr;
+    state.currentPage = 1;
+    showToast("Filter hari ini (" + todayStr + ")");
+    loadDashboard();
+  }
+
+  function filterThisMonth() {
+    var now = new Date();
+    var firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    var lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    var s = document.getElementById("filter-start-date");
+    var e = document.getElementById("filter-end-date");
+    if (s) s.value = formatDateToYMD(firstDay);
+    if (e) e.value = formatDateToYMD(lastDay);
+    state.currentPage = 1;
+    showToast("Filter bulan berjalan");
+    loadDashboard();
+  }
+
+  function quickFilterStatus(statusVal) {
+    var selectElem = document.getElementById("filter-status");
+    if (selectElem) {
+      selectElem.value = statusVal;
+      state.currentPage = 1;
+      loadDashboard();
+    }
+  }
+
+  function getStatusBadgeClass(status) {
+    if (!status) return "badge-gray";
+    var st = status.toString().toLowerCase();
+
+    if (st.indexOf("tolak") !== -1 || st.indexOf("gagalkan") !== -1) return "badge-danger";
+    if (st.indexOf("selesai") !== -1) return "badge-success";
+    if (st.indexOf("menunggu pembayaran") !== -1) return "badge-amber";
+    if (st.indexOf("persetujuan validasi") !== -1) return "badge-purple";
+    if (st.indexOf("validasi") !== -1) return "badge-purple";
+    if (st.indexOf("persetujuan verifikasi") !== -1) return "badge-cyan";
+    if (st.indexOf("verifikasi") !== -1) return "badge-cyan";
+    if (st.indexOf("persetujuan berkas") !== -1) return "badge-blue";
+    if (st.indexOf("pengecekan berkas") !== -1) return "badge-blue";
+    return "badge-gray";
+  }
+
+  function loadDashboard() {
+    var params = {
+      search: getInputValue("filter-search"),
+      jenis: getInputValue("filter-jenis", "all"),
+      status: getInputValue("filter-status", "all"),
+      startDate: getInputValue("filter-start-date"),
+      endDate: getInputValue("filter-end-date"),
+      page: state.currentPage,
+      pageSize: state.pageSize
+    };
+
+    var tbody = document.getElementById("table-body");
+    var mobileCards = document.getElementById("mobile-cards-body");
+    if (tbody) tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 3rem; color: var(--text-muted);">Memuat data e-BPHTB...</td></tr>';
+    if (mobileCards) mobileCards.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Memuat data e-BPHTB...</div>';
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(renderDashboard)
+        .withFailureHandler(function(err) {
+          var errTxt = (err && err.message) ? err.message : String(err);
+          if (tbody) tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 2rem; color: #f87171;">⚠️ Gagal: ' + errTxt + '</td></tr>';
+          if (mobileCards) mobileCards.innerHTML = '<div style="text-align: center; padding: 2rem; color: #f87171;">⚠️ Gagal: ' + errTxt + '</div>';
+          showToast("Error: " + errTxt);
+        })
+        .getDashboardData(params);
+    }
+  }
+
+  function renderDashboard(res) {
+    if (!res) return;
+
+    if (res.stats) {
+      setElementText("stat-total", res.stats.total || 0);
+      setElementText("stat-selesai", res.stats.selesai || 0);
+      setElementText("stat-ditolak", res.stats.ditolak || 0);
+      setElementText("stat-bphtb", res.stats.totalBphtb || "Rp0");
+    }
+
+    var sc = res.statusCounts || {};
+    setElementText("sc-all", (res.stats && res.stats.total) ? res.stats.total : 0);
+    setElementText("sc-pengajuan", sc["pengajuan"] || 0);
+    setElementText("sc-pengecekan", sc["pengecekan berkas"] || 0);
+    setElementText("sc-persetujuan-berkas", sc["persetujuan berkas"] || 0);
+    setElementText("sc-verifikasi", sc["verifikasi"] || 0);
+    setElementText("sc-persetujuan-verifikasi", sc["persetujuan verifikasi"] || 0);
+    setElementText("sc-validasi", sc["validasi"] || 0);
+    setElementText("sc-persetujuan-validasi", sc["persetujuan validasi"] || 0);
+    setElementText("sc-menunggu-bayar", sc["menunggu pembayaran"] || 0);
+    setElementText("sc-selesai", sc["selesai"] || 0);
+    setElementText("sc-ditolak", sc["di tolak / di gagalkan"] || 0);
+
+    var tbody = document.getElementById("table-body");
+    var mobileCards = document.getElementById("mobile-cards-body");
+    state.cachedItems = res.items || [];
+
+    var tableHtml = "";
+    var cardHtml = "";
+    var actionBtnLabel = state.isAdmin ? "Kelola" : "Rincian";
+
+    if (!res.items || res.items.length === 0) {
+      tableHtml = '<tr><td colspan="11" style="text-align: center; padding: 3rem; color: var(--text-muted);">Tidak ada berkas yang sesuai filter.</td></tr>';
+      cardHtml = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada berkas yang sesuai filter.</div>';
+    } else {
+      for (var i = 0; i < res.items.length; i++) {
+        var item = res.items[i];
+        var badgeClass = getStatusBadgeClass(item.status);
+        var displayBphtb = item.jenis === "Waris" ? (item.bphtbWaris || "-") : (item.bphtb || "-");
+        var displayNtpdVa = (item.ntpd || "-") + " / " + (item.noVa || "-");
+
+        tableHtml += '<tr>' +
+          '<td class="mono" style="font-weight: 600; color: #00ffaa;">' + (item.noReg || "-") + '</td>' +
+          '<td style="color: var(--text-muted);">' + (item.tglReg || "-") + '</td>' +
+          '<td>' + (item.jenis || "-") + '</td>' +
+          '<td style="font-weight: 600;">' + (item.wp || "-") + '</td>' +
+          '<td class="mono">' + (item.nop || "-") + '</td>' +
+          '<td class="mono">' + (item.nilaiValidasi || "-") + '</td>' +
+          '<td class="mono" style="color: #00ffaa;">' + displayBphtb + '</td>' +
+          '<td class="mono" style="color: #00e5ff;">' + (item.pph || "-") + '</td>' +
+          '<td class="mono" style="font-size: 0.75rem;">' + displayNtpdVa + '</td>' +
+          '<td><span class="badge ' + badgeClass + '">' + (item.status || "Pengajuan") + '</span></td>' +
+          '<td><button class="action-btn" onclick="openEditModal(' + item.rowIndex + ')">' + actionBtnLabel + '</button></td>' +
+        '</tr>';
+
+        cardHtml += '<div class="bphtb-card-mobile">' +
+          '<div class="card-top">' +
+            '<span class="card-noreg mono">' + (item.noReg || "-") + '</span>' +
+            '<span class="card-date">' + (item.tglReg || "-") + '</span>' +
+          '</div>' +
+          '<div>' +
+            '<div class="card-wp">' + (item.wp || "-") + '</div>' +
+            '<div class="card-nop mono">' + (item.nop || "-") + ' • ' + (item.jenis || "") + '</div>' +
+          '</div>' +
+          '<div class="card-finance-grid">' +
+            '<div class="card-fin-item"><span>Nilai Validasi:</span><b>' + (item.nilaiValidasi || "Rp0") + '</b></div>' +
+            '<div class="card-fin-item"><span>BPHTB:</span><b style="color: #00ffaa;">' + displayBphtb + '</b></div>' +
+            '<div class="card-fin-item"><span>PPH 2,5%:</span><b style="color: #00e5ff;">' + (item.pph || "-") + '</b></div>' +
+            '<div class="card-fin-item"><span>NTPD / VA:</span><b style="font-size: 0.72rem;">' + displayNtpdVa + '</b></div>' +
+          '</div>' +
+          '<div class="card-footer-action">' +
+            '<span class="badge ' + badgeClass + '">' + (item.status || "Pengajuan") + '</span>' +
+            '<button class="action-btn" style="padding: 0.45rem 1.1rem; border-color: var(--primary);" onclick="openEditModal(' + item.rowIndex + ')">' + actionBtnLabel + '</button>' +
+          '</div>' +
+        '</div>';
+      }
+    }
+
+    if (tbody) tbody.innerHTML = tableHtml;
+    if (mobileCards) mobileCards.innerHTML = cardHtml;
+
+    var pageText = (res.totalFiltered || 0) + " (Hal " + (res.page || 1) + "/" + (res.totalPages || 1) + ")";
+    setElementText("page-info", pageText);
+    setElementText("page-info-mobile", pageText);
+
+    var isFirst = ((res.page || 1) <= 1);
+    var isLast = ((res.page || 1) >= (res.totalPages || 1));
+
+    if (document.getElementById("btn-prev")) document.getElementById("btn-prev").disabled = isFirst;
+    if (document.getElementById("btn-next")) document.getElementById("btn-next").disabled = isLast;
+    if (document.getElementById("btn-prev-mobile")) document.getElementById("btn-prev-mobile").disabled = isFirst;
+    if (document.getElementById("btn-next-mobile")) document.getElementById("btn-next-mobile").disabled = isLast;
+  }
+
+  function changePage(delta) {
+    state.currentPage += delta;
+    if (state.currentPage < 1) state.currentPage = 1;
+    loadDashboard();
+  }
+
+  function openEditModal(rowIndex) {
+    var item = state.cachedItems.find(function(it) { return it.rowIndex === rowIndex; });
+    if (!item) return;
+
+    var elRow = document.getElementById("edit-row-index");
+    var elJenis = document.getElementById("edit-jenis");
+    var elNoreg = document.getElementById("edit-noreg");
+    var elWp = document.getElementById("edit-wp");
+    var elSert = document.getElementById("edit-sertifikat");
+    var elStatus = document.getElementById("edit-status");
+    var elNtpd = document.getElementById("edit-ntpd");
+    var elNova = document.getElementById("edit-nova");
+
+    if (elRow) elRow.value = item.rowIndex;
+    if (elJenis) elJenis.value = item.jenis || "Jual Beli";
+    if (elNoreg) elNoreg.value = item.noReg || "";
+    if (elWp) elWp.value = item.wp || "";
+    if (elSert) elSert.value = item.noSertifikat || "";
+    if (elStatus) elStatus.value = item.status || "Pengajuan";
+    if (elNtpd) elNtpd.value = item.ntpd || "";
+    if (elNova) elNova.value = item.noVa || "";
+
+    var tanahObj = parseDimensionString(item.luasTanahStr);
+    var bangunanObj = parseDimensionString(item.bangunanStr);
+
+    var elLt = document.getElementById("edit-luas-tanah");
+    var elTt = document.getElementById("edit-tarif-tanah");
+    var elLb = document.getElementById("edit-luas-bangunan");
+    var elTb = document.getElementById("edit-tarif-bangunan");
+
+    if (elLt) elLt.value = tanahObj.luas;
+    if (elTt) elTt.value = tanahObj.tarif;
+    if (elLb) elLb.value = bangunanObj.luas;
+    if (elTb) elTb.value = bangunanObj.tarif;
+
+    calculateEditForm();
+
+    var inputs = ["edit-noreg", "edit-luas-tanah", "edit-tarif-tanah", "edit-luas-bangunan", "edit-tarif-bangunan", "edit-sertifikat", "edit-status", "edit-ntpd", "edit-nova"];
+    for (var i = 0; i < inputs.length; i++) {
+      var el = document.getElementById(inputs[i]);
+      if (el) {
+        el.disabled = !state.isAdmin;
+        if (!state.isAdmin) el.setAttribute("readonly", true);
+        else el.removeAttribute("readonly");
+      }
+    }
+
+    var btnSubmit = document.getElementById("btn-submit-edit");
+    if (btnSubmit) btnSubmit.style.display = state.isAdmin ? "inline-flex" : "none";
+
+    openModal("modal-edit");
+  }
+
+  function handleCreateSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!state.isAdmin) {
+      alert("Akses ditolak: Hanya admin!");
+      return;
+    }
+
+    var btn = document.getElementById("btn-submit-create");
+    if (btn) {
+      btn.innerText = "Menyimpan...";
+      btn.disabled = true;
+    }
+
+    var savedPin = "adminNOT";
+    try {
+      var p = sessionStorage.getItem("bphtb_admin_pin");
+      if (p) savedPin = p;
+    } catch (err) {}
+
+    var payload = {
+      adminPin: savedPin,
+      jenis: getInputValue("input-jenis"),
+      tglRegister: getInputValue("input-tgl"),
+      wp: getInputValue("input-wp"),
+      nop: getInputValue("input-nop"),
+      noSertifikat: getInputValue("input-sertifikat"),
+      luasTanah: getInputValue("input-luas-tanah"),
+      tarifTanah: getInputValue("input-tarif-tanah"),
+      luasBangunan: getInputValue("input-luas-bangunan"),
+      tarifBangunan: getInputValue("input-tarif-bangunan"),
+      status: "Pengajuan"
+    };
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (btn) {
+            btn.innerText = "Simpan Pendaftaran";
+            btn.disabled = false;
+          }
+          closeModal("modal-create");
+          showToast((res && res.message) ? res.message : "Data berhasil disimpan!");
+          loadDashboard();
+        })
+        .withFailureHandler(function(err) {
+          if (btn) {
+            btn.innerText = "Simpan Pendaftaran";
+            btn.disabled = false;
+          }
+          alert("Gagal: " + ((err && err.message) ? err.message : String(err)));
+        })
+        .createBphtbRecord(payload);
+    }
+  }
+
+  function handleEditSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!state.isAdmin) {
+      alert("Akses ditolak: Anda harus login sebagai admin!");
+      return;
+    }
+
+    var rowVal = getInputValue("edit-row-index");
+    if (!rowVal) {
+      alert("Error: Nomor baris data tidak terdeteksi. Silakan klik Kelola kembali.");
+      return;
+    }
+
+    var btn = document.getElementById("btn-submit-edit");
+    if (btn) {
+      btn.innerText = "Menyimpan...";
+      btn.disabled = true;
+    }
+
+    var savedPin = "adminNOT";
+    try {
+      var p = sessionStorage.getItem("bphtb_admin_pin");
+      if (p) savedPin = p;
+    } catch (err) {}
+
+    var payload = {
+      adminPin: savedPin,
+      rowIndex: rowVal,
+      noRegister: getInputValue("edit-noreg"),
+      jenis: getInputValue("edit-jenis"),
+      luasTanah: getInputValue("edit-luas-tanah"),
+      tarifTanah: getInputValue("edit-tarif-tanah"),
+      luasBangunan: getInputValue("edit-luas-bangunan"),
+      tarifBangunan: getInputValue("edit-tarif-bangunan"),
+      noSertifikat: getInputValue("edit-sertifikat"),
+      status: getInputValue("edit-status"),
+      ntpd: getInputValue("edit-ntpd"),
+      noVa: getInputValue("edit-nova")
+    };
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (btn) {
+            btn.innerText = "Perbarui Berkas";
+            btn.disabled = false;
+          }
+          closeModal("modal-edit");
+          showToast((res && res.message) ? res.message : "Data berhasil diperbarui!");
+          loadDashboard();
+        })
+        .withFailureHandler(function(err) {
+          if (btn) {
+            btn.innerText = "Perbarui Berkas";
+            btn.disabled = false;
+          }
+          var errMsg = (err && err.message) ? err.message : String(err);
+          alert("Gagal memperbarui berkas:\n" + errMsg);
+        })
+        .updateBphtbRecord(payload);
+    }
+  }
+
+  window.onload = function() {
+    updateAdminUI();
+    loadDashboard();
+  };
+</script>

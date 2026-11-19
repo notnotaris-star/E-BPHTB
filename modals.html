@@ -1,0 +1,260 @@
+<!-- MODAL PENDAFTARAN BARU -->
+<div class="modal-overlay" id="modal-create">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">+ Input Pendaftaran e-BPHTB Baru</div>
+      <button class="modal-close" onclick="closeModal('modal-create')">&times;</button>
+    </div>
+    <form id="form-create" onsubmit="handleCreateSubmit(event)">
+      <div class="modal-body">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Jenis Perolehan</label>
+            <select id="input-jenis" class="input-box" required onchange="calculateForm()">
+              <option value="Jual Beli">Jual Beli</option>
+              <option value="Waris">Waris</option>
+              <option value="Hibah">Hibah</option>
+              <option value="Pembagian Hak Bersama">Pembagian Hak Bersama</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tanggal Register</label>
+            <input type="date" id="input-tgl" class="input-box" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nama Wajib Pajak (WP)</label>
+          <input type="text" id="input-wp" class="input-box" placeholder="Nama lengkap sesuai KTP" required>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Nomor Objek Pajak (NOP)</label>
+            <input type="text" id="input-nop" class="input-box mono" placeholder="35.29.xxx.xxx.xxx.xxxx.x" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nomor Sertifikat (Opsional)</label>
+            <input type="text" id="input-sertifikat" class="input-box" placeholder="No Hak Milik / Buku">
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Luas Tanah (m²)</label>
+            <input type="number" id="input-luas-tanah" class="input-box" placeholder="0" min="0" value="0" oninput="calculateForm()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">NJOP / Tarif Tanah (Rp/m²)</label>
+            <input type="number" id="input-tarif-tanah" class="input-box" placeholder="0" min="0" value="0" oninput="calculateForm()">
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Luas Bangunan (m²)</label>
+            <input type="number" id="input-luas-bangunan" class="input-box" placeholder="0" min="0" value="0" oninput="calculateForm()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">NJOP Bangunan (Rp/m²)</label>
+            <input type="number" id="input-tarif-bangunan" class="input-box" placeholder="0" min="0" value="0" oninput="calculateForm()">
+          </div>
+        </div>
+
+        <!-- Live Kalkulator Preview -->
+        <div class="calc-preview">
+          <div class="calc-row">
+            <span style="color: var(--text-muted);">Nilai Tanah:</span>
+            <span class="mono" id="prev-h-tanah">Rp0</span>
+          </div>
+          <div class="calc-row">
+            <span style="color: var(--text-muted);">Nilai Bangunan:</span>
+            <span class="mono" id="prev-h-bangunan">Rp0</span>
+          </div>
+          <div class="calc-row total">
+            <span>Total Nilai Validasi (NPOP):</span>
+            <span class="mono" id="prev-total-npop">Rp0</span>
+          </div>
+          <div class="calc-row">
+            <span style="color: var(--text-muted);">Estimasi BPHTB:</span>
+            <span class="mono" id="prev-bphtb" style="color: #00ffaa; font-weight: 600;">Rp0</span>
+          </div>
+          <div class="calc-row">
+            <span style="color: var(--text-muted);">Estimasi PPH 2,5%:</span>
+            <span class="mono" id="prev-pph" style="color: #00e5ff; font-weight: 600;">Rp0</span>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-create')">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-create">Simpan Pendaftaran</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL EDIT / KELOLA BERKAS -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Kelola Berkas & Status Alur</div>
+      <button class="modal-close" onclick="closeModal('modal-edit')">&times;</button>
+    </div>
+    <form id="form-edit" onsubmit="handleEditSubmit(event)">
+      <input type="hidden" id="edit-row-index">
+      <input type="hidden" id="edit-jenis">
+      <div class="modal-body">
+        
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">No Register</label>
+            <input type="text" id="edit-noreg" class="input-box mono" placeholder="SMP3529xxxxx" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Wajib Pajak (WP)</label>
+            <input type="text" id="edit-wp" class="input-box" readonly disabled>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.5px;">
+            Revisi Objek Pajak (Tanah & Bangunan)
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Luas Tanah (m²)</label>
+              <input type="number" id="edit-luas-tanah" class="input-box" min="0" placeholder="0" oninput="calculateEditForm()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tarif Tanah (Rp/m²)</label>
+              <input type="number" id="edit-tarif-tanah" class="input-box" min="0" placeholder="0" oninput="calculateEditForm()">
+            </div>
+          </div>
+
+          <div class="form-grid-2" style="margin-top: 0.5rem;">
+            <div class="form-group">
+              <label class="form-label">Luas Bangunan (m²)</label>
+              <input type="number" id="edit-luas-bangunan" class="input-box" min="0" placeholder="0" oninput="calculateEditForm()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tarif Bangunan (Rp/m²)</label>
+              <input type="number" id="edit-tarif-bangunan" class="input-box" min="0" placeholder="0" oninput="calculateEditForm()">
+            </div>
+          </div>
+        </div>
+
+        <div class="calc-preview">
+          <div class="calc-row">
+            <span style="color: var(--text-muted);">Nilai Tanah:</span>
+            <span class="mono" id="edit-prev-h-tanah" style="color: #fff;">Rp0</span>
+          </div>
+          <div class="calc-row">
+            <span style="color: var(--text-muted);">Nilai Bangunan:</span>
+            <span class="mono" id="edit-prev-h-bangunan" style="color: #fff;">Rp0</span>
+          </div>
+          <div class="calc-row total">
+            <span>Total Nilai Validasi (NPOP):</span>
+            <span class="mono" id="edit-prev-total-npop">Rp0</span>
+          </div>
+          <div class="calc-row">
+            <span style="color: var(--text-muted);">BPHTB Terutang:</span>
+            <span class="mono" id="edit-prev-bphtb" style="color: var(--primary); font-weight: 600;">Rp0</span>
+          </div>
+          <div class="calc-row">
+            <span style="color: var(--text-muted);">PPH 2,5%:</span>
+            <span class="mono" id="edit-prev-pph" style="color: var(--accent-cyan); font-weight: 600;">Rp0</span>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Nomor Sertifikat</label>
+            <input type="text" id="edit-sertifikat" class="input-box" placeholder="Contoh: SHM 1234">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status Alur Berkas</label>
+            <select id="edit-status" class="input-box">
+              <option value="Pengajuan">Pengajuan</option>
+              <option value="Pengecekan Berkas">Pengecekan Berkas</option>
+              <option value="Persetujuan Berkas">Persetujuan Berkas</option>
+              <option value="Verifikasi">Verifikasi</option>
+              <option value="Persetujuan Verifikasi">Persetujuan Verifikasi</option>
+              <option value="Validasi">Validasi</option>
+              <option value="Persetujuan Validasi">Persetujuan Validasi</option>
+              <option value="Menunggu Pembayaran">Menunggu Pembayaran</option>
+              <option value="Selesai">Selesai</option>
+              <option value="Di Tolak / Di Gagalkan">Di Tolak / Di Gagalkan</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Nomor NTPD</label>
+            <input type="text" id="edit-ntpd" class="input-box mono" placeholder="Nomor Transaksi Pendapatan Daerah">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nomor Virtual Account (No VA)</label>
+            <input type="text" id="edit-nova" class="input-box mono" placeholder="Nomor VA Bank Jatim / Persepsi">
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-edit')">Tutup</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-edit">Perbarui Berkas</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL AUTENTIKASI PASSWORD ADMIN (SENSOR TITIK) -->
+<div class="modal-overlay" id="modal-auth">
+  <div class="modal-card" style="max-width: 380px;">
+    <div class="modal-header">
+      <div class="modal-title">🔐 Autentikasi Admin</div>
+      <button class="modal-close" onclick="closeModal('modal-auth')">&times;</button>
+    </div>
+    <form id="form-auth" onsubmit="handleAuthSubmit(event)">
+      <div class="modal-body" style="gap: 1rem;">
+        <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+          Masukkan password rahasia untuk membuka hak akses tambah berkas dan kelola data.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Password Admin</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input 
+              type="password" 
+              id="input-admin-pass" 
+              class="input-box mono" 
+              placeholder="••••••••" 
+              required 
+              style="width: 100%; padding-right: 2.5rem; font-size: 1rem; letter-spacing: 1px;"
+              autocomplete="current-password"
+            >
+            <button 
+              type="button" 
+              onclick="togglePasswordVisibility()" 
+              style="position: absolute; right: 0.75rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; line-height: 1;"
+              title="Lihat / Sembunyikan Password"
+            >👁️</button>
+          </div>
+          <span id="auth-error-msg" style="display: none; color: var(--accent-danger); font-size: 0.75rem; font-weight: 600; margin-top: 0.2rem;">
+            ⚠️ Password salah! Silakan coba lagi.
+          </span>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-auth')">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-auth">Masuk</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- TOAST NOTIFIKASI -->
+<div class="toast" id="toast-msg">Notifikasi pesan</div>
